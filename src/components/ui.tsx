@@ -13,6 +13,7 @@ const PATHS = {
   close: "M6 6l12 12M18 6 6 18",
   target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-3a1 1 0 1 0 0-2",
   arrow: "M5 12h14m-6-6 6 6-6 6",
+  gift: "M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7C10 3 6 3 6 6s4 1 6 1Zm0 0c2-4 6-4 6-1s-4 1-6 1Z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

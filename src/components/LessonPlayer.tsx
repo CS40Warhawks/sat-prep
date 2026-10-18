@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fillBlank } from "@/lib/passage";
+import type { Item } from "@/content/wardrobe";
+import { newlyUnlocked } from "@/lib/avatar";
 import { finishLesson } from "@/lib/progress";
 import type { ChoiceLetter, Lesson, Question } from "@/lib/types";
+import { ItemPreview } from "./Avatar";
 import { Choices, Eyebrow, Icon, Passage, ProgressBar } from "./ui";
+import { useAvatar } from "./useAvatar";
 
 const PRAISE = ["Nice work", "Correct", "You got it", "Exactly right", "Well done"];
 const REVIEW_SIZE = 8;
@@ -49,6 +53,8 @@ export function LessonPlayer({
   const [combo, setCombo] = useState(0);
   const [result, setResult] = useState<ReturnType<typeof finishLesson> | null>(null);
   const [praise, setPraise] = useState(PRAISE[0]);
+  const [rewards, setRewards] = useState<Item[]>([]);
+  const { state: avatar } = useAvatar();
 
   const current = queue?.[0];
   const isCorrect = checked && current && selected === current.answer;
@@ -73,7 +79,9 @@ export function LessonPlayer({
     setChecked(false);
     if (rest.length === 0) {
       const correctFirst = Object.values(firstTry).filter(Boolean).length;
-      setResult(finishLesson(skill, lesson.slug, correctFirst, total));
+      const done = finishLesson(skill, lesson.slug, correctFirst, total);
+      setResult(done);
+      setRewards(newlyUnlocked(done.before, done.progress));
       setPhase({ kind: "done" });
     }
   }, [queue, current, isCorrect, firstTry, skill, lesson.slug, total]);
@@ -128,6 +136,26 @@ export function LessonPlayer({
             </div>
           ))}
         </div>
+        {rewards.length > 0 && avatar && (
+          <div className="animate-pop mt-6 w-full rounded-2xl border border-gold/40 bg-amber-50 p-4 text-left" style={{ animationDelay: "0.5s" }}>
+            <p className="flex items-center gap-2 text-sm font-semibold text-gold-dark">
+              <Icon name="gift" className="h-4 w-4" />
+              {rewards.length === 1 ? "New for your avatar" : `${rewards.length} new items for your avatar`}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-4">
+              {rewards.map((it) => (
+                <div key={it.id} className="flex items-center gap-2">
+                  <ItemPreview look={avatar.look} item={it} size={48} />
+                  <span className="text-sm font-medium">{it.name}</span>
+                </div>
+              ))}
+            </div>
+            <Link href={`/avatar?item=${rewards[0].id}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-sky hover:underline">
+              Try it on
+              <Icon name="arrow" className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
         <p className="mt-8 text-muted">
           {result.extendedStreak
             ? "Your streak grew today. Small steps, real points."

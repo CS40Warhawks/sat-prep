@@ -10,13 +10,15 @@ export interface LessonRecord {
 export interface Progress {
   xp: number;
   streak: number;
+  /** Longest streak so far, so streak rewards stay earned after a missed day. */
+  bestStreak: number;
   /** Local date (YYYY-MM-DD) of the last finished lesson. */
   lastActive: string | null;
   todayXp: number;
   lessons: Record<string, LessonRecord>;
 }
 
-const empty: Progress = { xp: 0, streak: 0, lastActive: null, todayXp: 0, lessons: {} };
+const empty: Progress = { xp: 0, streak: 0, bestStreak: 0, lastActive: null, todayXp: 0, lessons: {} };
 
 export function localDay(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -38,6 +40,8 @@ export function loadProgress(): Progress {
   } catch {
     p = { ...empty };
   }
+  // Older saves have no bestStreak; their current streak is the best one known.
+  p.bestStreak = Math.max(p.bestStreak ?? 0, p.streak);
   const today = localDay();
   if (p.lastActive && p.lastActive !== today) {
     p.todayXp = 0;
@@ -57,9 +61,11 @@ export function finishLesson(skill: string, lesson: string, correctFirstTry: num
   const xp = xpForLesson(correctFirstTry, total);
   const key = lessonKey(skill, lesson);
   const prev = p.lessons[key];
+  const streak = extendedStreak ? p.streak + 1 : p.streak;
   const next: Progress = {
     xp: p.xp + xp,
-    streak: extendedStreak ? p.streak + 1 : p.streak,
+    streak,
+    bestStreak: Math.max(p.bestStreak, streak),
     lastActive: today,
     todayXp: p.todayXp + xp,
     lessons: {
@@ -75,5 +81,5 @@ export function finishLesson(skill: string, lesson: string, correctFirstTry: num
   } catch {
     // Storage unavailable (private mode); progress just isn't saved.
   }
-  return { progress: next, xp, extendedStreak };
+  return { before: p, progress: next, xp, extendedStreak };
 }

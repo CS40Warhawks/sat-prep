@@ -5,6 +5,7 @@ import { boundariesLessons } from "../src/content/rw/boundaries.path.ts";
 import { boundariesQuestions } from "../src/content/rw/boundaries.questions.ts";
 import { BLANK, fillBlank } from "../src/lib/passage.ts";
 import type { Lesson, Question } from "../src/lib/types.ts";
+import { wardrobe } from "../src/content/wardrobe.ts";
 
 const banks: Record<string, Question[]> = {
   boundaries: boundariesQuestions,
@@ -78,8 +79,25 @@ const counts = Object.entries(banks).map(([s, qs]) => {
   return `${s}: ${qs.length} questions, answers ${JSON.stringify(byAnswer)}`;
 });
 
+// Avatar items: unique ids, and every skill journey has exactly one halfway and one end reward.
+const itemIds = new Set<string>();
+for (const it of wardrobe) {
+  if (itemIds.has(it.id)) errors.push(`wardrobe/${it.id}: duplicate id`);
+  itemIds.add(it.id);
+}
+const skillSlugs = new Set(units.flatMap((u) => u.skills.map((s) => s.slug)));
+for (const skill of skillSlugs) {
+  for (const stage of ["half", "end"]) {
+    const n = wardrobe.filter((i) => i.unlock.kind === "journey" && i.unlock.skill === skill && i.unlock.stage === stage).length;
+    if (n !== 1) errors.push(`wardrobe: ${skill} has ${n} "${stage}" rewards, expected 1`);
+  }
+}
+for (const it of wardrobe) {
+  if (it.unlock.kind === "journey" && !skillSlugs.has(it.unlock.skill)) errors.push(`wardrobe/${it.id}: unknown skill ${it.unlock.skill}`);
+}
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
-console.log(`Content OK\n${counts.join("\n")}`);
+console.log(`Content OK\n${counts.join("\n")}\nwardrobe: ${wardrobe.length} items`);
