@@ -37,3 +37,20 @@ export interface Unit {
   title: string;
   skills: Skill[];
 }
+
+/** A short teaching card shown before a lesson's questions. */
+export interface Tip {
+  title: string;
+  body: string;
+  example?: { wrong?: string; right: string };
+}
+
+/** One bite-sized step on the learning path. */
+export interface Lesson {
+  slug: string;
+  title: string;
+  tips: Tip[];
+  /** Question ids from the skill's bank. A review lesson leaves this empty and draws from the whole bank. */
+  questionIds: string[];
+  review?: boolean;
+}

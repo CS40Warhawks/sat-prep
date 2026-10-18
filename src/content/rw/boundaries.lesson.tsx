@@ -2,18 +2,18 @@
 
 function Example({ wrong, right, note }: { wrong?: string; right: string; note: string }) {
   return (
-    <div className="my-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+    <div className="my-3 rounded-2xl border-2 border-line p-4 text-sm">
       {wrong && (
-        <p className="text-red-700 dark:text-red-400">
+        <p className="text-wrong-dark">
           <span className="font-semibold">✗ </span>
           {wrong}
         </p>
       )}
-      <p className="text-green-700 dark:text-green-400">
+      <p className="text-brand-dark">
         <span className="font-semibold">✓ </span>
         {right}
       </p>
-      <p className="mt-2 text-slate-600 dark:text-slate-400">{note}</p>
+      <p className="mt-2 text-muted">{note}</p>
     </div>
   );
 }
