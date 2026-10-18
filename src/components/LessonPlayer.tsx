@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BLANK, fillBlank } from "@/lib/passage";
+import { fillBlank } from "@/lib/passage";
 import { finishLesson } from "@/lib/progress";
 import type { ChoiceLetter, Lesson, Question } from "@/lib/types";
+import { Choices, Eyebrow, Icon, Passage, ProgressBar } from "./ui";
 
-const PRAISE = ["Nice!", "Great job!", "Correct!", "You got it!", "Excellent!"];
+const PRAISE = ["Nice work", "Correct", "You got it", "Exactly right", "Well done"];
 const REVIEW_SIZE = 8;
 
 function shuffle<T>(items: T[]): T[] {
@@ -16,27 +17,6 @@ function shuffle<T>(items: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-function Passage({ text }: { text: string }) {
-  const [before, after] = text.split(BLANK);
-  return (
-    <p className="text-lg leading-relaxed">
-      {before}
-      <span className="mx-1 inline-block w-16 border-b-[3px] border-ink/50 align-baseline" aria-label="blank" />
-      {after}
-    </p>
-  );
-}
-
-function ProgressBar({ value }: { value: number }) {
-  return (
-    <div className="h-4 flex-1 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow={Math.round(value * 100)} aria-valuemin={0} aria-valuemax={100}>
-      <div className="relative h-full rounded-full bg-brand transition-all duration-500" style={{ width: `${Math.max(value * 100, 3)}%` }}>
-        <div className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/30" />
-      </div>
-    </div>
-  );
 }
 
 type Phase = { kind: "tip"; index: number } | { kind: "question" } | { kind: "done" };
@@ -125,21 +105,26 @@ export function LessonPlayer({
     const accuracy = Math.round((correctFirst / total) * 100);
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <div className="animate-pop text-8xl" aria-hidden>
-          {accuracy === 100 ? "🏆" : "🎉"}
+        <div className="animate-pop flex h-20 w-20 items-center justify-center rounded-full bg-gold text-white">
+          <Icon name={accuracy === 100 ? "trophy" : "check"} className="h-10 w-10" />
         </div>
-        <h1 className="mt-6 text-3xl font-extrabold text-gold-dark">
-          {accuracy === 100 ? "Perfect lesson!" : "Lesson complete!"}
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight">
+          {accuracy === 100 ? "Perfect lesson" : "Lesson complete"}
         </h1>
         <div className="mt-8 grid w-full grid-cols-3 gap-3">
           {[
-            { label: "Total XP", value: `⚡ ${result.xp}`, color: "border-gold bg-gold" },
-            { label: "Accuracy", value: `🎯 ${accuracy}%`, color: "border-brand bg-brand" },
-            { label: "Streak", value: `🔥 ${result.progress.streak}`, color: "border-flame bg-flame" },
+            { label: "XP earned", value: `+${result.xp}`, icon: "bolt" as const, color: "text-gold" },
+            { label: "Accuracy", value: `${accuracy}%`, icon: "target" as const, color: "text-brand" },
+            { label: "Day streak", value: `${result.progress.streak}`, icon: "flame" as const, color: "text-flame" },
           ].map((s, i) => (
-            <div key={s.label} className={`animate-pop overflow-hidden rounded-2xl border-2 ${s.color}`} style={{ animationDelay: `${0.15 * (i + 1)}s` }}>
-              <p className="py-1 text-xs font-extrabold uppercase text-white">{s.label}</p>
-              <p className="rounded-xl bg-white py-3 text-lg font-extrabold">{s.value}</p>
+            <div
+              key={s.label}
+              className="animate-pop rounded-2xl border border-line bg-white px-2 py-4"
+              style={{ animationDelay: `${0.12 * (i + 1)}s` }}
+            >
+              <Icon name={s.icon} className={`mx-auto h-5 w-5 ${s.color}`} />
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{s.value}</p>
+              <p className="text-xs text-muted">{s.label}</p>
             </div>
           ))}
         </div>
@@ -158,31 +143,36 @@ export function LessonPlayer({
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-4">
       <div className="flex items-center gap-4 py-6">
-        <Link href="/learn" aria-label="Quit lesson" className="text-2xl font-bold text-[#afafaf] hover:text-muted">
-          ✕
+        <Link href="/learn" aria-label="Quit lesson" className="text-stone-400 hover:text-ink">
+          <Icon name="close" className="h-6 w-6" />
         </Link>
         <ProgressBar value={done / steps} />
-        {combo >= 3 && <span className="animate-pop text-sm font-extrabold text-flame">🔥 {combo}</span>}
+        {combo >= 3 && (
+          <span className="animate-pop flex items-center gap-1 text-sm font-semibold text-flame">
+            <Icon name="flame" className="h-4 w-4" />
+            {combo}
+          </span>
+        )}
       </div>
 
       <div className="flex-1 pb-48">
         {phase.kind === "tip" && (
           <div key={phase.index} className="animate-pop">
-            <p className="text-sm font-extrabold uppercase tracking-wide text-sky">
-              💡 Quick tip {phase.index + 1} of {tipCount}
-            </p>
-            <h1 className="mt-2 text-2xl font-extrabold">{lesson.tips[phase.index].title}</h1>
+            <Eyebrow className="text-sky">
+              Quick tip {phase.index + 1} of {tipCount}
+            </Eyebrow>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight">{lesson.tips[phase.index].title}</h1>
             <p className="mt-4 text-lg leading-relaxed">{lesson.tips[phase.index].body}</p>
             {lesson.tips[phase.index].example && (
-              <div className="mt-6 space-y-2 rounded-2xl border-2 border-line p-4">
+              <div className="mt-6 space-y-2 rounded-2xl border border-line bg-white p-4">
                 {lesson.tips[phase.index].example!.wrong && (
                   <p className="rounded-xl bg-wrong-soft px-3 py-2 text-wrong-dark">
-                    <span className="font-extrabold">✗ </span>
+                    <span className="font-semibold">✗ </span>
                     {lesson.tips[phase.index].example!.wrong}
                   </p>
                 )}
                 <p className="rounded-xl bg-brand-soft px-3 py-2 text-brand-dark">
-                  <span className="font-extrabold">✓ </span>
+                  <span className="font-semibold">✓ </span>
                   {lesson.tips[phase.index].example!.right}
                 </p>
               </div>
@@ -192,37 +182,13 @@ export function LessonPlayer({
 
         {phase.kind === "question" && current && (
           <div key={current.id + (firstTry[current.id] === false ? "-retry" : "")}>
-            <p className="text-sm font-extrabold uppercase tracking-wide text-sky">
-              {firstTry[current.id] === false && !checked ? "🔁 Let's try this one again" : "Fill in the blank"}
-            </p>
-            <div className="mt-3 rounded-2xl border-2 border-line p-5">
-              <Passage text={current.passage} />
-            </div>
-            <p className="mt-5 font-bold">{current.prompt}</p>
-            <div className="mt-4 grid gap-3">
-              {current.choices.map((c, i) => {
-                const isSel = selected === c.letter;
-                const isAns = c.letter === current.answer;
-                let tone = "border-line hover:bg-gray-50";
-                if (isSel && !checked) tone = "border-sky bg-sky-soft text-sky-dark";
-                if (checked && isAns) tone = "border-brand bg-brand-soft text-brand-dark";
-                if (checked && isSel && !isAns) tone = "border-wrong bg-wrong-soft text-wrong-dark";
-                return (
-                  <button
-                    key={c.letter}
-                    type="button"
-                    disabled={checked}
-                    onClick={() => setSelected(c.letter)}
-                    aria-pressed={isSel}
-                    className={`flex items-center gap-3 rounded-2xl border-2 border-b-4 p-4 text-left text-base font-semibold transition-colors ${tone}`}
-                  >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-current text-xs font-extrabold opacity-70">
-                      {i + 1}
-                    </span>
-                    {c.text}
-                  </button>
-                );
-              })}
+            <Eyebrow className="mb-3 text-sky">
+              {firstTry[current.id] === false && !checked ? "Try this one again" : "Fill in the blank"}
+            </Eyebrow>
+            <Passage text={current.passage} />
+            <p className="mt-5 font-medium">{current.prompt}</p>
+            <div className="mt-4">
+              <Choices question={current} selected={selected} onSelect={setSelected} reveal={checked} />
             </div>
           </div>
         )}
@@ -230,8 +196,8 @@ export function LessonPlayer({
 
       {/* Bottom action bar */}
       <div
-        className={`fixed inset-x-0 bottom-0 border-t-2 ${
-          !checked ? "border-line bg-white" : isCorrect ? "animate-slide-up border-transparent bg-brand-soft" : "animate-slide-up border-transparent bg-wrong-soft"
+        className={`fixed inset-x-0 bottom-0 border-t ${
+          !checked ? "border-line bg-paper" : isCorrect ? "animate-slide-up border-transparent bg-brand-soft" : "animate-slide-up border-transparent bg-wrong-soft"
         }`}
       >
         <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between">
@@ -248,17 +214,17 @@ export function LessonPlayer({
           {phase.kind === "question" && current && checked && (
             <>
               <div className={isCorrect ? "text-brand-dark" : "text-wrong-dark"}>
-                <p className="text-2xl font-extrabold">{isCorrect ? `✓ ${praise}` : "✗ Not quite"}</p>
+                <p className="text-xl font-semibold">{isCorrect ? praise : "Not quite"}</p>
                 {isCorrect ? (
                   <p className="mt-1 text-sm">{answer!.explanation.replace(/^Correct\.\s*/, "")}</p>
                 ) : (
                   <>
                     <p className="mt-1 text-sm">
-                      <span className="font-extrabold">Why: </span>
+                      <span className="font-semibold">Why: </span>
                       {current.choices.find((c) => c.letter === selected)!.explanation}
                     </p>
                     <p className="mt-2 text-sm">
-                      <span className="font-extrabold">Correct sentence: </span>
+                      <span className="font-semibold">Correct sentence: </span>
                       {fillBlank(current.passage, answer!.text)}
                     </p>
                   </>

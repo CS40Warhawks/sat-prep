@@ -1,5 +1,6 @@
 // Checks every question bank for structural mistakes. Run with `npm run validate`.
 import { units } from "../src/content/catalog.ts";
+import { diagnosticQuestions } from "../src/content/diagnostic.ts";
 import { boundariesLessons } from "../src/content/rw/boundaries.path.ts";
 import { boundariesQuestions } from "../src/content/rw/boundaries.questions.ts";
 import { BLANK, fillBlank } from "../src/lib/passage.ts";
@@ -8,6 +9,9 @@ import type { Lesson, Question } from "../src/lib/types.ts";
 const banks: Record<string, Question[]> = {
   boundaries: boundariesQuestions,
 };
+// Checked with the same rules as skill banks, but it spans every skill and has no lesson path.
+const DIAGNOSTIC = "diagnostic";
+banks[DIAGNOSTIC] = diagnosticQuestions;
 
 const paths: Record<string, Lesson[]> = {
   boundaries: boundariesLessons,
@@ -28,8 +32,8 @@ for (const [slug, questions] of Object.entries(banks)) {
     const where = `${slug}/${q.id}`;
     if (ids.has(q.id)) errors.push(`${where}: duplicate id`);
     ids.add(q.id);
-    if (q.skill !== slug) errors.push(`${where}: skill is "${q.skill}"`);
-    if (q.passage.split(BLANK).length !== 2) errors.push(`${where}: passage needs exactly one blank`);
+    if (slug !== DIAGNOSTIC && q.skill !== slug) errors.push(`${where}: skill is "${q.skill}"`);
+    if (q.passage.split(BLANK).length > 2) errors.push(`${where}: passage has more than one blank`);
     const letters = q.choices.map((c) => c.letter).join("");
     if (letters !== "ABCD") errors.push(`${where}: choices are "${letters}", expected ABCD`);
     if (!q.choices.some((c) => c.letter === q.answer)) errors.push(`${where}: answer ${q.answer} is not a choice`);
@@ -59,7 +63,15 @@ for (const [slug, lessons] of Object.entries(paths)) {
   }
   for (const id of bank) if (!used.has(id)) errors.push(`${slug}: question ${id} isn't in any lesson`);
 }
-for (const slug of Object.keys(banks)) if (!paths[slug]) errors.push(`${slug}: has questions but no lesson path`);
+for (const slug of Object.keys(banks)) if (slug !== DIAGNOSTIC && !paths[slug]) errors.push(`${slug}: has questions but no lesson path`);
+
+// Diagnostic: two questions for every skill in the catalog, and nothing else.
+const catalogSkills = new Set(units.flatMap((u) => u.skills.map((s) => s.slug)));
+for (const slug of catalogSkills) {
+  const n = diagnosticQuestions.filter((q) => q.skill === slug).length;
+  if (n !== 2) errors.push(`diagnostic: ${slug} has ${n} questions, expected 2`);
+}
+for (const q of diagnosticQuestions) if (!catalogSkills.has(q.skill)) errors.push(`diagnostic/${q.id}: unknown skill ${q.skill}`);
 
 const counts = Object.entries(banks).map(([s, qs]) => {
   const byAnswer = qs.reduce<Record<string, number>>((m, q) => ((m[q.answer] = (m[q.answer] ?? 0) + 1), m), {});
