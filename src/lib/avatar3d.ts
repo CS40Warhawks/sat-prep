@@ -104,49 +104,102 @@ function buildHair(shape: string, color: string, g: THREE.Group, underHat = fals
   }
 }
 
-function buildTop(item: Item, g: THREE.Group) {
+// Torso outline (radius, height), spun around the vertical axis.
+const TORSO_PROFILE: [number, number][] = [
+  [0.001, -0.36], [0.3, -0.38], [0.55, -0.46], [0.68, -0.6], [0.72, -0.85], [0.7, -1.3], [0.66, -1.75], [0.64, -2.0], [0.5, -2.12], [0.001, -2.15],
+];
+const TORSO_SCALE: [number, number, number] = [1.12, 1, 0.78];
+const CHEST_Z = 0.56;
+const SHOULDER_X = 0.86;
+
+function torsoGeo(gap = 0) {
+  const pts = TORSO_PROFILE.map(([r, y]) => new THREE.Vector2(r, y));
+  return gap ? new THREE.LatheGeometry(pts, 48, gap, Math.PI * 2 - gap * 2) : new THREE.LatheGeometry(pts, 48);
+}
+
+/** Arm hanging from the shoulder: sleeve, forearm and hand. Sleeve color comes from the top. */
+function buildArm(side: -1 | 1, sleeve: THREE.Material, skin: THREE.Material, g: THREE.Group, longSleeve: boolean) {
+  const arm = new THREE.Group();
+  arm.position.set(side * SHOULDER_X, -0.66, 0);
+  arm.rotation.z = side * 0.16;
+  arm.add(mesh(new THREE.SphereGeometry(0.25, 24, 16), sleeve, [0, 0, 0]));
+  arm.add(mesh(new THREE.CapsuleGeometry(0.22, longSleeve ? 0.95 : 0.35, 8, 20), sleeve, [0, longSleeve ? -0.5 : -0.24, 0]));
+  if (!longSleeve) arm.add(mesh(new THREE.CapsuleGeometry(0.17, 0.62, 8, 20), skin, [0, -0.72, 0]));
+  arm.add(mesh(new THREE.SphereGeometry(0.21, 20, 16), skin, [0, -1.18, 0.02], [0, 0, 0], [0.95, 1.1, 0.85]));
+  g.add(arm);
+}
+
+function buildTop(item: Item, skinMat: THREE.Material, g: THREE.Group) {
   const { shape, color } = item;
   const accent = item.accent ?? darker(color);
-  const torsoGeo = (gap = 0) =>
-    gap ? sphere(1, Math.PI, Math.PI / 2 + gap, Math.PI * 2 - gap * 2) : sphere(1);
-  const torso = (m: THREE.Material, gap = 0, grow = 1) => mesh(torsoGeo(gap), m, [0, -1.62, 0], [0, 0, 0], [1.8 * grow, 1.05 * grow, 0.98 * grow]);
+  const torso = (m: THREE.Material, gap = 0, grow = 1) => {
+    m.side = THREE.DoubleSide;
+    return mesh(torsoGeo(gap), m, [0, 0, 0], [0, 0, 0], [TORSO_SCALE[0] * grow, 1, TORSO_SCALE[2] * grow]);
+  };
   const side = new THREE.MeshStandardMaterial({ color, roughness: 0.7, side: THREE.DoubleSide });
+  let sleeve: THREE.Material = mat(color, { roughness: 0.75 });
+  let longSleeve = false;
 
   switch (shape) {
-    case "stripes":
-      g.add(torso(new THREE.MeshStandardMaterial({ map: stripeTexture(color, accent), roughness: 0.75 })));
+    case "stripes": {
+      const striped = new THREE.MeshStandardMaterial({ map: stripeTexture(color, accent), roughness: 0.75 });
+      g.add(torso(striped));
+      longSleeve = true;
       break;
+    }
     case "hoodie":
       g.add(torso(mat(color, { roughness: 0.85 })));
-      g.add(mesh(new THREE.TorusGeometry(0.58, 0.2, 16, 40), mat(accent, { roughness: 0.85 }), [0, -0.62, 0.05], [Math.PI / 2 - 0.25, 0, 0]));
-      for (const x of [-0.18, 0.18]) g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5), mat("#fafaf9"), [x, -0.95, 0.68], [-0.25, 0, 0]));
+      g.add(mesh(new THREE.TorusGeometry(0.46, 0.17, 16, 40), mat(accent, { roughness: 0.85 }), [0, -0.46, -0.04], [Math.PI / 2 - 0.3, 0, 0]));
+      for (const x of [-0.14, 0.14]) g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.45), mat("#fafaf9"), [x, -0.82, CHEST_Z + 0.02], [-0.1, 0, 0]));
+      g.add(mesh(new THREE.BoxGeometry(0.8, 0.32, 0.06), mat(accent, { roughness: 0.85 }), [0, -1.55, CHEST_Z - 0.02]));
+      longSleeve = true;
       break;
     case "vest":
       g.add(torso(mat(accent)));
-      g.add(torso(side, 0.42, 1.03));
+      g.add(torso(side, 0.5, 1.04));
+      sleeve = mat(accent);
       break;
     case "jacket":
       g.add(torso(mat(accent)));
-      g.add(torso(side, 0.26, 1.03));
+      g.add(torso(side, 0.3, 1.04));
+      longSleeve = true;
       break;
     case "turtleneck":
       g.add(torso(mat(color, { roughness: 0.9 })));
-      g.add(mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.42, 32), mat(color, { roughness: 0.9 }), [0, -0.52, 0]));
+      g.add(mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.36, 32), mat(color, { roughness: 0.9 }), [0, -0.4, 0]));
+      longSleeve = true;
       break;
     case "spacesuit":
       g.add(torso(mat(color, { roughness: 0.5 })));
-      g.add(mesh(new THREE.TorusGeometry(0.5, 0.12, 16, 40), mat("#94a3b8", { metalness: 0.4, roughness: 0.35 }), [0, -0.66, 0], [Math.PI / 2, 0, 0]));
-      g.add(mesh(new THREE.BoxGeometry(0.5, 0.32, 0.12), mat(accent), [0.55, -1.05, 0.82], [-0.35, 0.45, 0]));
-      g.add(mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.06, 24), mat("#2563eb"), [-0.62, -1.1, 0.8], [Math.PI / 2 - 0.35, 0, -0.45]));
+      g.add(mesh(new THREE.TorusGeometry(0.42, 0.11, 16, 40), mat("#94a3b8", { metalness: 0.4, roughness: 0.35 }), [0, -0.45, 0], [Math.PI / 2, 0, 0]));
+      g.add(mesh(new THREE.BoxGeometry(0.42, 0.28, 0.1), mat(accent), [0.32, -1.0, CHEST_Z + 0.03]));
+      g.add(mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.06, 24), mat("#2563eb"), [-0.34, -1.0, CHEST_Z + 0.03], [Math.PI / 2, 0, 0]));
+      longSleeve = true;
       break;
     case "varsity":
       g.add(torso(mat(color)));
-      for (const x of [-1.32, 1.32]) g.add(mesh(new THREE.SphereGeometry(0.52, SEG, 24), mat("#f5f5f4"), [x, -1.12, -0.05], [0, 0, 0], [1, 0.9, 1]));
-      g.add(mesh(new THREE.TorusGeometry(0.5, 0.08, 12, 40), mat(accent), [0, -0.66, 0.02], [Math.PI / 2 - 0.2, 0, 0]));
-      g.add(mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 24), mat(accent), [-0.6, -1.1, 0.82], [Math.PI / 2 - 0.35, 0, -0.45]));
+      g.add(mesh(new THREE.TorusGeometry(0.4, 0.07, 12, 40), mat(accent), [0, -0.46, 0.02], [Math.PI / 2 - 0.25, 0, 0]));
+      g.add(mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 24), mat(accent), [-0.34, -0.95, CHEST_Z + 0.02], [Math.PI / 2, 0, 0]));
+      sleeve = mat("#f5f5f4");
+      longSleeve = true;
       break;
     default:
       g.add(torso(mat(color)));
+  }
+  buildArm(-1, sleeve, skinMat, g, longSleeve);
+  buildArm(1, sleeve, skinMat, g, longSleeve);
+}
+
+/** Jeans and sneakers, the same for everyone for now. */
+function buildLegs(g: THREE.Group) {
+  const denim = mat("#3f5f8f", { roughness: 0.9 });
+  const sole = mat("#f5f5f4", { roughness: 0.6 });
+  const shoe = mat("#1c1917", { roughness: 0.5 });
+  g.add(mesh(new THREE.SphereGeometry(0.7, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), denim, [0, -2.0, 0], [Math.PI, 0, 0], [1.08, 0.55, 0.78]));
+  for (const x of [-0.34, 0.34]) {
+    g.add(mesh(new THREE.CapsuleGeometry(0.27, 1.0, 8, 20), denim, [x, -2.75, 0]));
+    g.add(mesh(new THREE.SphereGeometry(0.3, 24, 16), shoe, [x, -3.42, 0.12], [0, 0, 0], [1, 0.62, 1.45]));
+    g.add(mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.08, 24), sole, [x, -3.58, 0.12], [0, 0, 0], [1, 1, 1.45]));
   }
 }
 
@@ -284,7 +337,7 @@ export function buildAvatar(look: AvatarLook): THREE.Group {
   g.add(mesh(new THREE.SphereGeometry(1, SEG * 1.5, SEG), skin, [0, HEAD_Y, 0], [0, 0, 0], [0.93, 1, 0.92]));
   for (const x of [-0.9, 0.9]) g.add(mesh(new THREE.SphereGeometry(0.2, 20, 16), skin, [x, HEAD_Y - 0.02, 0], [0, 0, 0], [0.6, 1, 0.8]));
   g.add(mesh(new THREE.SphereGeometry(0.12, 20, 16), skin, [0, HEAD_Y - 0.12, 0.92]));
-  g.add(mesh(new THREE.CylinderGeometry(0.33, 0.36, 0.8, 32), skin, [0, -0.35, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.3, 0.33, 0.6, 32), skin, [0, -0.3, 0]));
 
   // Eyes with a highlight, and cheeks
   const eye = mat("#1c1917", { roughness: 0.2 });
@@ -296,11 +349,13 @@ export function buildAvatar(look: AvatarLook): THREE.Group {
   }
   buildMouth(look.expression, g);
 
-  const brimmed = hat && hat.shape !== "headphones" && hat.shape !== "helmet";
+  // Small hats (crown, party cone) and over-ear gear leave the hair as it is.
+  const brimmed = hat && !["headphones", "helmet", "crown", "cone"].includes(hat.shape);
   // Under a hat, short styles tuck in; long hair and curls still show below the brim.
   const tuck = brimmed && !["long", "shaved", "curly"].includes(hair.shape);
   buildHair(tuck ? "tucked" : hair.shape, look.hairColor, g, !!brimmed);
-  buildTop(top, g);
+  buildLegs(g);
+  buildTop(top, skin, g);
   if (face) buildFace(face, g);
   if (hat) buildHat(hat, g);
   return g;
@@ -317,7 +372,19 @@ export function disposeGroup(g: THREE.Object3D) {
   });
 }
 
-export function createScene() {
+export type Framing = "portrait" | "full";
+
+function aim(camera: THREE.PerspectiveCamera, framing: Framing) {
+  if (framing === "full") {
+    camera.position.set(0, 0.1, 12.9);
+    camera.lookAt(0, -0.45, 0);
+  } else {
+    camera.position.set(0, 0.8, 8.6);
+    camera.lookAt(0, 0.5, 0);
+  }
+}
+
+export function createScene(framing: Framing = "portrait") {
   const scene = new THREE.Scene();
   scene.add(new THREE.HemisphereLight("#ffffff", "#e7d6c8", 1.9));
   const key = new THREE.DirectionalLight("#ffffff", 2.2);
@@ -327,8 +394,7 @@ export function createScene() {
   rim.position.set(-4, 3, -4);
   scene.add(rim);
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  camera.position.set(0, 0.8, 8.6);
-  camera.lookAt(0, 0.5, 0);
+  aim(camera, framing);
   return { scene, camera };
 }
 
@@ -424,12 +490,13 @@ export function drawBackdrop(ctx: CanvasRenderingContext2D, item: Item | null, s
 let shared: { renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera } | null = null;
 const cache = new Map<string, string>();
 
-export function renderAvatarImage(look: AvatarLook, px: number): string {
-  const key = `${px}:${JSON.stringify(look)}`;
+export function renderAvatarImage(look: AvatarLook, px: number, framing: Framing = "portrait"): string {
+  const key = `${px}:${framing}:${JSON.stringify(look)}`;
   const hit = cache.get(key);
   if (hit) return hit;
   if (!shared) shared = { renderer: createRenderer(undefined, true), ...createScene() };
   const { renderer, scene, camera } = shared;
+  aim(camera, framing);
   renderer.setPixelRatio(1);
   renderer.setSize(px, px, false);
   const avatar = buildAvatar(look);

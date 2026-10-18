@@ -67,13 +67,15 @@ export function AvatarStudio() {
     .sort((a, b) => Number(unlocked.has(b.id)) - Number(unlocked.has(a.id)));
   const optional = tab === "hat" || tab === "face";
   const current = look[tab];
+  // Close-ups for things worn on the head; the whole body for clothes and backdrops.
+  const framing = tab === "top" || tab === "bg" ? "full" : "portrait";
 
   return (
     <div className="space-y-12">
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-line bg-white p-6 text-center">
-            <AvatarViewer look={look} size={200} className="mx-auto" />
+            <AvatarViewer look={look} size={240} className="mx-auto" />
             <p className="mt-2 text-xs text-muted">Drag to spin</p>
             <div className="mt-5 text-left">
               <div className="flex items-baseline justify-between text-sm">
@@ -132,7 +134,7 @@ export function AvatarStudio() {
                 onClick={() => set({ [tab]: null })}
                 className={`rounded-2xl border bg-white p-3 text-center transition ${current === null ? "border-brand ring-2 ring-brand" : "border-line hover:border-stone-300"}`}
               >
-                <Avatar look={{ ...look, [tab]: null }} size={72} className="mx-auto" />
+                <Avatar look={{ ...look, [tab]: null }} size={88} className="mx-auto" framing={framing} />
                 <p className="mt-2 text-sm font-medium">None</p>
               </button>
             )}
@@ -152,7 +154,7 @@ export function AvatarStudio() {
                     <span className="absolute top-2 left-2 rounded-full bg-wrong px-1.5 py-0.5 text-[10px] font-bold text-white uppercase">New</span>
                   )}
                   <span className="mx-auto block w-fit">
-                    <ItemPreview look={look} item={item} size={72} locked={!open} />
+                    <ItemPreview look={look} item={item} size={88} locked={!open} framing={framing} />
                   </span>
                   <p className="mt-2 text-sm font-medium">{item.name}</p>
                   {!open && <p className="mt-0.5 text-xs text-muted">{unlockHint(item)}</p>}

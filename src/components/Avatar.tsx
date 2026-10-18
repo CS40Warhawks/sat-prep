@@ -374,6 +374,8 @@ export function AvatarFlat({ look, size = 96, className = "", title }: { look: A
 }
 
 type Lib = typeof import("@/lib/avatar3d");
+/** "portrait" crops to head and shoulders; "full" shows the whole body. */
+export type Framing = "portrait" | "full";
 let lib: Promise<Lib> | null = null;
 const load3d = () => (lib ??= import("@/lib/avatar3d"));
 let canUse3d: boolean | null = null;
@@ -398,7 +400,7 @@ function enqueue(job: () => void) {
 const BUCKETS = [64, 96, 128, 192, 256, 384];
 const pixels = (size: number) => BUCKETS.find((b) => b >= size * 2) ?? 384;
 
-function useAvatarImage(look: AvatarLook, size: number): string | null | "flat" {
+function useAvatarImage(look: AvatarLook, size: number, framing: Framing): string | null | "flat" {
   const [img, setImg] = useState<string | null | "flat">(null);
   const key = JSON.stringify(look);
   useEffect(() => {
@@ -410,7 +412,7 @@ function useAvatarImage(look: AvatarLook, size: number): string | null | "flat" 
         enqueue(() => {
           if (!live) return;
           try {
-            setImg(m.renderAvatarImage(JSON.parse(key), pixels(size)));
+            setImg(m.renderAvatarImage(JSON.parse(key), pixels(size), framing));
           } catch {
             setImg("flat");
           }
@@ -420,13 +422,25 @@ function useAvatarImage(look: AvatarLook, size: number): string | null | "flat" 
     return () => {
       live = false;
     };
-  }, [key, size]);
+  }, [key, size, framing]);
   return img;
 }
 
 /** The learner's 3D avatar as a still image. Falls back to the flat version without WebGL. */
-export function Avatar({ look, size = 96, className = "", title }: { look: AvatarLook; size?: number; className?: string; title?: string }) {
-  const img = useAvatarImage(look, size);
+export function Avatar({
+  look,
+  size = 96,
+  className = "",
+  title,
+  framing = "portrait",
+}: {
+  look: AvatarLook;
+  size?: number;
+  className?: string;
+  title?: string;
+  framing?: Framing;
+}) {
+  const img = useAvatarImage(look, size, framing);
   if (img === "flat") return <AvatarFlat look={look} size={size} className={className} title={title} />;
   if (!img) {
     const bg = get(look.bg, defaultLook.bg)!;
@@ -463,7 +477,7 @@ export function AvatarViewer({ look, size = 200, className = "" }: { look: Avata
         const renderer = m.createRenderer(canvas.current);
         renderer.setPixelRatio(dpr);
         renderer.setSize(size, size, false);
-        const { scene, camera } = m.createScene();
+        const { scene, camera } = m.createScene("full");
         let avatar = m.buildAvatar(latest.current);
         scene.add(avatar);
         m.drawBackdrop(bctx, get(latest.current.bg, defaultLook.bg), px);
@@ -555,10 +569,22 @@ export function AvatarViewer({ look, size = 200, className = "" }: { look: Avata
 }
 
 /** A small avatar wearing one item, used for item tiles and reward chips. */
-export function ItemPreview({ look, item, size = 64, locked = false }: { look: AvatarLook; item: Item; size?: number; locked?: boolean }) {
+export function ItemPreview({
+  look,
+  item,
+  size = 64,
+  locked = false,
+  framing = "portrait",
+}: {
+  look: AvatarLook;
+  item: Item;
+  size?: number;
+  locked?: boolean;
+  framing?: Framing;
+}) {
   return (
     <span className={`relative inline-block ${locked ? "opacity-50 grayscale" : ""}`}>
-      <Avatar look={withItem(look, item)} size={size} title={item.name} />
+      <Avatar look={withItem(look, item)} size={size} title={item.name} framing={framing} />
       {locked && (
         <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white">
           <Icon name="lock" className="h-3 w-3" />
