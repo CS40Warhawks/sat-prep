@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Icon } from "@/components/ui";
 import { safeNext } from "@/lib/access";
 import { site } from "@/lib/site";
 
@@ -10,10 +11,10 @@ export default async function UnlockPage({ searchParams }: { searchParams: Searc
   const { next, error } = await searchParams;
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center px-6 text-center">
-      <div className="text-6xl" aria-hidden>
-        🔒
-      </div>
-      <h1 className="mt-4 text-3xl font-extrabold text-brand">{site.name}</h1>
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-white">
+        <Icon name="lock" className="h-6 w-6" />
+      </span>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight">{site.name}</h1>
       <p className="mt-2 text-muted">This site is in early access. Enter the password to continue.</p>
       <form action="/api/unlock" method="post" className="mt-8 w-full space-y-3">
         <input type="hidden" name="next" value={safeNext(next)} />
@@ -29,7 +30,7 @@ export default async function UnlockPage({ searchParams }: { searchParams: Searc
           autoComplete="current-password"
           placeholder="Password"
           aria-invalid={!!error}
-          className={`w-full rounded-2xl border-2 bg-gray-50 px-4 py-3 text-lg outline-none focus:border-sky ${error ? "border-wrong" : "border-line"}`}
+          className={`w-full rounded-xl border bg-white px-4 py-3 text-lg outline-none focus:border-sky ${error ? "border-wrong" : "border-line"}`}
         />
         {error && <p className="text-sm font-bold text-wrong-dark">That password didn&apos;t work. Try again.</p>}
         <button type="submit" className="btn-green w-full">

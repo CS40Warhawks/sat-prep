@@ -1,22 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #58cc02;
-  --color-brand-dark: #46a302;
-  --color-brand-soft: #d7ffb8;
-  --color-sky: #1cb0f6;
-  --color-sky-dark: #1899d6;
-  --color-sky-soft: #ddf4ff;
-  --color-gold: #ffc800;
-  --color-gold-dark: #e5a500;
-  --color-flame: #ff9600;
-  --color-wrong: #ff4b4b;
-  --color-wrong-dark: #ea2b2b;
-  --color-wrong-soft: #ffdfe0;
-  --color-line: #e5e5e5;
-  --color-ink: #3c3c3c;
-  --color-muted: #777777;
-  --font-sans: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-brand: #16a34a;
+  --color-brand-dark: #15803d;
+  --color-brand-soft: #ecfdf3;
+  --color-sky: #4f46e5;
+  --color-sky-dark: #4338ca;
+  --color-sky-soft: #eef2ff;
+  --color-gold: #f59e0b;
+  --color-gold-dark: #b45309;
+  --color-flame: #f97316;
+  --color-wrong: #e11d48;
+  --color-wrong-dark: #be123c;
+  --color-wrong-soft: #fff1f2;
+  --color-line: #e7e5e4;
+  --color-ink: #1c1917;
+  --color-muted: #78716c;
+  --color-paper: #fafaf9;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
 }
 
 :root {
@@ -24,34 +25,34 @@
 }
 
 body {
-  background: #ffffff;
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
 
-/* Chunky, pressable buttons. */
+/* Pressable buttons: a slim bottom edge keeps the tactile feel without the noise. */
 @utility btn {
-  @apply inline-flex items-center justify-center rounded-2xl border-2 border-b-4 px-5 py-3 text-sm font-extrabold tracking-wide uppercase transition-transform select-none active:translate-y-[2px] active:border-b-2 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-b-[3px] px-5 py-3 text-sm font-semibold tracking-wide transition select-none active:translate-y-px active:border-b disabled:cursor-not-allowed;
 }
 @utility btn-green {
-  @apply btn border-brand-dark bg-brand text-white hover:brightness-105;
+  @apply btn border-brand-dark bg-brand text-white hover:bg-brand-dark;
 }
 @utility btn-blue {
-  @apply btn border-sky-dark bg-sky text-white hover:brightness-105;
+  @apply btn border-sky-dark bg-sky text-white hover:bg-sky-dark;
 }
 @utility btn-red {
-  @apply btn border-wrong-dark bg-wrong text-white hover:brightness-105;
+  @apply btn border-wrong-dark bg-wrong text-white hover:bg-wrong-dark;
 }
 @utility btn-ghost {
-  @apply btn border-line bg-white text-sky hover:bg-gray-50;
+  @apply btn border-line bg-white text-ink hover:bg-stone-50;
 }
 @utility btn-off {
-  @apply btn border-line bg-line text-[#afafaf] active:translate-y-0 active:border-b-4;
+  @apply btn border-line bg-stone-100 text-stone-400 active:translate-y-0 active:border-b-[3px];
 }
 
 @layer components {
   .lesson h2 {
-    @apply mt-8 text-xl font-extrabold;
+    @apply mt-8 text-xl font-semibold tracking-tight;
   }
   .lesson ul {
     @apply list-disc space-y-1 pl-6;
@@ -67,7 +68,7 @@ body {
     @apply border border-line p-2 text-left align-top;
   }
   .lesson th {
-    @apply bg-gray-100;
+    @apply bg-stone-100;
   }
 }
 

@@ -14,7 +14,7 @@ export interface MultipleChoiceQuestion {
   skill: string;
   difficulty: Difficulty;
   type: "multiple-choice";
-  /** Passage text. Use "______" to mark the blank. */
+  /** Passage text, empty for most math questions. Use "______" to mark a blank. */
   passage: string;
   prompt: string;
   choices: Choice[];
@@ -35,6 +35,8 @@ export interface Unit {
   slug: string;
   section: Section;
   title: string;
+  /** Share of the section on the real test, from the College Board's test specifications. */
+  testShare: { percent: number; questions: [number, number] };
   skills: Skill[];
 }
 
