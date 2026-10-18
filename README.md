@@ -24,3 +24,7 @@ To add a skill, write its guidebook, path and questions, register them, set `ava
 Progress (XP, streak, daily goal, finished lessons) is saved in the browser for now. Accounts (Supabase) and payments (Stripe) come in later milestones; see the course plan.
 
 All questions are original. SAT is a trademark registered by the College Board, which is not affiliated with this site.
+
+## Early-access password
+
+Set the `SITE_PASSWORD` environment variable (in Vercel: Project → Settings → Environment Variables) to put the whole site behind a password screen. Visitors stay unlocked for 30 days, and the site is hidden from search engines while the gate is on. Remove the variable and redeploy to make the site public. See `.env.example`.
