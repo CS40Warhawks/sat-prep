@@ -1,39 +1,79 @@
-// Practice progress, stored in the browser until accounts exist.
-const KEY = "peakprep:progress:v1";
+// Learner progress, stored in the browser until accounts exist.
+const KEY = "peakprep:progress:v2";
+export const DAILY_GOAL = 30;
 
-export interface SkillProgress {
-  best: number;
-  total: number;
-  attempts: number;
+export interface LessonRecord {
+  completions: number;
+  bestAccuracy: number;
 }
 
-type ProgressMap = Record<string, SkillProgress>;
+export interface Progress {
+  xp: number;
+  streak: number;
+  /** Local date (YYYY-MM-DD) of the last finished lesson. */
+  lastActive: string | null;
+  todayXp: number;
+  lessons: Record<string, LessonRecord>;
+}
 
-function read(): ProgressMap {
+const empty: Progress = { xp: 0, streak: 0, lastActive: null, todayXp: 0, lessons: {} };
+
+export function localDay(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
+}
+
+export function lessonKey(skill: string, lesson: string) {
+  return `${skill}/${lesson}`;
+}
+
+/** Progress as of today: a missed day resets the streak, and daily XP starts over each day. */
+export function loadProgress(): Progress {
+  let p: Progress;
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "{}") as ProgressMap;
+    p = { ...empty, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
   } catch {
-    return {};
+    p = { ...empty };
   }
+  const today = localDay();
+  if (p.lastActive && p.lastActive !== today) {
+    p.todayXp = 0;
+    if (daysBetween(p.lastActive, today) > 1) p.streak = 0;
+  }
+  return p;
 }
 
-export function getProgress(skill: string): SkillProgress | undefined {
-  return read()[skill];
+export function xpForLesson(correctFirstTry: number, total: number): number {
+  return 10 + correctFirstTry + (correctFirstTry === total ? 5 : 0);
 }
 
-export function recordSession(skill: string, correct: number, total: number): SkillProgress {
-  const all = read();
-  const prev = all[skill];
-  const next = {
-    best: Math.max(prev?.best ?? 0, correct),
-    total,
-    attempts: (prev?.attempts ?? 0) + 1,
+export function finishLesson(skill: string, lesson: string, correctFirstTry: number, total: number) {
+  const p = loadProgress();
+  const today = localDay();
+  const extendedStreak = p.lastActive !== today;
+  const xp = xpForLesson(correctFirstTry, total);
+  const key = lessonKey(skill, lesson);
+  const prev = p.lessons[key];
+  const next: Progress = {
+    xp: p.xp + xp,
+    streak: extendedStreak ? p.streak + 1 : p.streak,
+    lastActive: today,
+    todayXp: p.todayXp + xp,
+    lessons: {
+      ...p.lessons,
+      [key]: {
+        completions: (prev?.completions ?? 0) + 1,
+        bestAccuracy: Math.max(prev?.bestAccuracy ?? 0, correctFirstTry / total),
+      },
+    },
   };
-  all[skill] = next;
   try {
-    localStorage.setItem(KEY, JSON.stringify(all));
+    localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     // Storage unavailable (private mode); progress just isn't saved.
   }
-  return next;
+  return { progress: next, xp, extendedStreak };
 }

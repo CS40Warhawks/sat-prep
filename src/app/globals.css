@@ -1,37 +1,57 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #58cc02;
+  --color-brand-dark: #46a302;
+  --color-brand-soft: #d7ffb8;
+  --color-sky: #1cb0f6;
+  --color-sky-dark: #1899d6;
+  --color-sky-soft: #ddf4ff;
+  --color-gold: #ffc800;
+  --color-gold-dark: #e5a500;
+  --color-flame: #ff9600;
+  --color-wrong: #ff4b4b;
+  --color-wrong-dark: #ea2b2b;
+  --color-wrong-soft: #ffdfe0;
+  --color-line: #e5e5e5;
+  --color-ink: #3c3c3c;
+  --color-muted: #777777;
+  --font-sans: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #e2e8f0;
-  }
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Chunky, pressable buttons. */
+@utility btn {
+  @apply inline-flex items-center justify-center rounded-2xl border-2 border-b-4 px-5 py-3 text-sm font-extrabold tracking-wide uppercase transition-transform select-none active:translate-y-[2px] active:border-b-2 disabled:cursor-not-allowed;
+}
+@utility btn-green {
+  @apply btn border-brand-dark bg-brand text-white hover:brightness-105;
+}
+@utility btn-blue {
+  @apply btn border-sky-dark bg-sky text-white hover:brightness-105;
+}
+@utility btn-red {
+  @apply btn border-wrong-dark bg-wrong text-white hover:brightness-105;
+}
+@utility btn-ghost {
+  @apply btn border-line bg-white text-sky hover:bg-gray-50;
+}
+@utility btn-off {
+  @apply btn border-line bg-line text-[#afafaf] active:translate-y-0 active:border-b-4;
 }
 
 @layer components {
-  .btn-primary {
-    @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  .btn-secondary {
-    @apply inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 font-medium hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800;
-  }
   .lesson h2 {
-    @apply mt-8 text-xl font-semibold;
+    @apply mt-8 text-xl font-extrabold;
   }
   .lesson ul {
     @apply list-disc space-y-1 pl-6;
@@ -44,9 +64,40 @@ body {
   }
   .lesson th,
   .lesson td {
-    @apply border border-slate-200 p-2 text-left align-top dark:border-slate-700;
+    @apply border border-line p-2 text-left align-top;
   }
   .lesson th {
-    @apply bg-slate-100 dark:bg-slate-800;
+    @apply bg-gray-100;
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: pop 0.35s ease-out both;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out both;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-bob {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop, .animate-slide-up, .animate-bob {
+    animation: none;
   }
 }

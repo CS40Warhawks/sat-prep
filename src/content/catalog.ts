@@ -88,7 +88,7 @@ export const units: Unit[] = [
   },
 ];
 
-export const sectionTitles = { rw: "Reading and Writing", math: "Math" } as const;
+export const sectionTitles = { rw: "Reading & Writing", math: "Math" } as const;
 
 export function findSkill(slug: string): { unit: Unit; skill: Skill } | undefined {
   for (const unit of units) {

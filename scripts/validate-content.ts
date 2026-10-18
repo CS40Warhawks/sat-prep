@@ -1,11 +1,16 @@
 // Checks every question bank for structural mistakes. Run with `npm run validate`.
 import { units } from "../src/content/catalog.ts";
+import { boundariesLessons } from "../src/content/rw/boundaries.path.ts";
 import { boundariesQuestions } from "../src/content/rw/boundaries.questions.ts";
 import { BLANK, fillBlank } from "../src/lib/passage.ts";
-import type { Question } from "../src/lib/types.ts";
+import type { Lesson, Question } from "../src/lib/types.ts";
 
 const banks: Record<string, Question[]> = {
   boundaries: boundariesQuestions,
+};
+
+const paths: Record<string, Lesson[]> = {
+  boundaries: boundariesLessons,
 };
 
 const errors: string[] = [];
@@ -37,6 +42,24 @@ for (const [slug, questions] of Object.entries(banks)) {
     if (fillBlank(q.passage, "x").includes("  ")) errors.push(`${where}: double space in passage`);
   }
 }
+
+for (const [slug, lessons] of Object.entries(paths)) {
+  const bank = new Set((banks[slug] ?? []).map((q) => q.id));
+  const used = new Set<string>();
+  const slugs = new Set<string>();
+  for (const l of lessons) {
+    if (slugs.has(l.slug)) errors.push(`${slug}: duplicate lesson slug ${l.slug}`);
+    slugs.add(l.slug);
+    if (!l.review && l.questionIds.length < 3) errors.push(`${slug}/${l.slug}: needs at least 3 questions`);
+    for (const id of l.questionIds) {
+      if (!bank.has(id)) errors.push(`${slug}/${l.slug}: unknown question ${id}`);
+      if (used.has(id)) errors.push(`${slug}/${l.slug}: question ${id} is already in another lesson`);
+      used.add(id);
+    }
+  }
+  for (const id of bank) if (!used.has(id)) errors.push(`${slug}: question ${id} isn't in any lesson`);
+}
+for (const slug of Object.keys(banks)) if (!paths[slug]) errors.push(`${slug}: has questions but no lesson path`);
 
 const counts = Object.entries(banks).map(([s, qs]) => {
   const byAnswer = qs.reduce<Record<string, number>>((m, q) => ((m[q.answer] = (m[q.answer] ?? 0) + 1), m), {});
