@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import type { Item } from "@/content/wardrobe";
+import { defaultLook, journeyRewards, type AvatarLook } from "@/lib/avatar";
 import { sectionTitles } from "@/content/catalog";
 import { buildPlan, loadDiagnostic, type DiagnosticResults, type SkillStatus } from "@/lib/diagnostic";
 import { DAILY_GOAL, lessonKey, type Progress } from "@/lib/progress";
 import type { Section } from "@/lib/types";
+import { Avatar, ItemPreview } from "./Avatar";
 import { Eyebrow, Icon, type IconName } from "./ui";
+import { useAvatar } from "./useAvatar";
 import { useProgress } from "./useProgress";
 
 export interface PathUnit {
@@ -62,6 +66,22 @@ function LessonNode({ href, state, title, review, offset }: { href: string; stat
   );
 }
 
+function RewardStop({ item, open, look, label, offset }: { item: Item; open: boolean; look: AvatarLook; label: string; offset: number }) {
+  return (
+    <Link
+      href={`/avatar?item=${item.id}`}
+      style={{ transform: `translateX(${offset}px)` }}
+      className={`flex items-center gap-3 rounded-2xl border py-2 pr-4 pl-2 transition ${open ? "border-gold/50 bg-amber-50" : "border-dashed border-stone-300 bg-white hover:border-stone-400"}`}
+    >
+      <ItemPreview look={look} item={item} size={44} locked={!open} />
+      <span className="text-left">
+        <span className="block text-[11px] font-semibold tracking-wide text-gold-dark uppercase">{open ? "Unlocked" : label}</span>
+        <span className="text-sm font-medium">{item.name}</span>
+      </span>
+    </Link>
+  );
+}
+
 function nodeStates(skill: string, lessons: { slug: string }[], progress: Progress | null): NodeState[] {
   let unlocked = true;
   return lessons.map((l) => {
@@ -105,6 +125,9 @@ function PlanBanner({ results }: { results: DiagnosticResults | null }) {
 
 export function LearningPath({ units }: { units: PathUnit[] }) {
   const progress = useProgress();
+  const { state: avatar } = useAvatar();
+  const look = avatar?.look ?? defaultLook;
+  const owned = (id: string) => !!avatar?.unlocked.has(id);
   const [results, setResults] = useState<DiagnosticResults | null>(null);
   useEffect(() => setResults(loadDiagnostic()), []);
   const [section, setSection] = useState<Section>("rw");
@@ -130,6 +153,13 @@ export function LearningPath({ units }: { units: PathUnit[] }) {
             </button>
           ))}
         </div>
+        <Link href="/avatar" className="hidden items-center gap-4 rounded-2xl border border-line bg-white p-4 hover:border-stone-300 lg:flex">
+          <Avatar look={look} size={56} />
+          <div>
+            <p className="font-semibold">Your avatar</p>
+            <p className="text-sm text-muted">{avatar?.fresh.size ? `${avatar.fresh.size} new item${avatar.fresh.size > 1 ? "s" : ""} to try on` : "Earn outfits on every journey"}</p>
+          </div>
+        </Link>
         <div className="hidden rounded-2xl border border-line bg-white p-4 lg:block">
           <div className="flex items-baseline justify-between">
             <h2 className="font-semibold">Daily goal</h2>
@@ -164,6 +194,8 @@ export function LearningPath({ units }: { units: PathUnit[] }) {
                 .map((skill) => {
                   const states = nodeStates(skill.slug, skill.lessons, progress);
                   const st = statusOf(skill.slug);
+                  const rewards = journeyRewards(skill.slug);
+                  const half = Math.ceil(skill.lessons.length / 2);
                   return (
                     <div key={skill.slug}>
                       <div className="flex items-center justify-between gap-3">
@@ -185,15 +217,22 @@ export function LearningPath({ units }: { units: PathUnit[] }) {
                       </div>
                       <div className="mt-14 flex flex-col items-center gap-14">
                         {skill.lessons.map((lesson, i) => (
-                          <LessonNode
-                            key={lesson.slug}
-                            href={`/lesson/${skill.slug}/${lesson.slug}`}
-                            state={states[i]}
-                            title={lesson.title}
-                            review={lesson.review}
-                            offset={OFFSETS[i % OFFSETS.length]}
-                          />
+                          <Fragment key={lesson.slug}>
+                            <LessonNode
+                              href={`/lesson/${skill.slug}/${lesson.slug}`}
+                              state={states[i]}
+                              title={lesson.title}
+                              review={lesson.review}
+                              offset={OFFSETS[i % OFFSETS.length]}
+                            />
+                            {rewards.half && i === half - 1 && i < skill.lessons.length - 1 && (
+                              <RewardStop item={rewards.half} open={owned(rewards.half.id)} look={look} label="Halfway reward" offset={-OFFSETS[i % OFFSETS.length] / 2} />
+                            )}
+                          </Fragment>
                         ))}
+                        {rewards.end && (
+                          <RewardStop item={rewards.end} open={owned(rewards.end.id)} look={look} label="Journey reward" offset={0} />
+                        )}
                       </div>
                     </div>
                   );

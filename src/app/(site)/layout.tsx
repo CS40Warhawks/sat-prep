@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AvatarBadge } from "@/components/AvatarBadge";
 import { StatsBar } from "@/components/StatsBar";
 import { site } from "@/lib/site";
 
@@ -6,6 +7,7 @@ const NAV = [
   { href: "/learn", label: "Learn" },
   { href: "/diagnostic", label: "Diagnostic" },
   { href: "/plan", label: "Plan" },
+  { href: "/avatar", label: "Avatar" },
 ];
 
 export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -26,7 +28,10 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
               ))}
             </div>
           </div>
-          <StatsBar />
+          <div className="flex items-center gap-4">
+            <StatsBar />
+            <AvatarBadge />
+          </div>
         </nav>
         <div className="flex justify-center gap-6 border-t border-line py-2 text-sm text-muted sm:hidden">
           {NAV.map((n) => (
