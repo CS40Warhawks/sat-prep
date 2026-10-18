@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { itemsById, type Item } from "@/content/wardrobe";
 import { defaultLook, withItem, type AvatarLook } from "@/lib/avatar";
 import { Icon } from "./ui";
@@ -329,8 +329,8 @@ function Mouth({ expression }: { expression: string }) {
   return <path d="M45 53 Q50 57.5 55 53" fill="none" stroke={INK} strokeWidth={1.8} strokeLinecap="round" />;
 }
 
-/** The learner's avatar. Pass `size` in pixels; it scales cleanly at any size. */
-export function Avatar({ look, size = 96, className = "", title }: { look: AvatarLook; size?: number; className?: string; title?: string }) {
+/** Flat vector avatar, used when 3D rendering is unavailable. */
+export function AvatarFlat({ look, size = 96, className = "", title }: { look: AvatarLook; size?: number; className?: string; title?: string }) {
   const uid = useId().replace(/:/g, "");
   const circle = `av-${uid}`;
   const torso = `avt-${uid}`;
@@ -370,6 +370,187 @@ export function Avatar({ look, size = 96, className = "", title }: { look: Avata
         {hat && <Hat item={hat} />}
       </g>
     </svg>
+  );
+}
+
+type Lib = typeof import("@/lib/avatar3d");
+let lib: Promise<Lib> | null = null;
+const load3d = () => (lib ??= import("@/lib/avatar3d"));
+let canUse3d: boolean | null = null;
+
+// Renders run a few per frame so a page full of tiles never freezes scrolling.
+const queue: (() => void)[] = [];
+let pumping = false;
+function pump() {
+  const start = performance.now();
+  while (queue.length && performance.now() - start < 12) queue.shift()!();
+  if (queue.length) requestAnimationFrame(pump);
+  else pumping = false;
+}
+function enqueue(job: () => void) {
+  queue.push(job);
+  if (!pumping) {
+    pumping = true;
+    requestAnimationFrame(pump);
+  }
+}
+
+const BUCKETS = [64, 96, 128, 192, 256, 384];
+const pixels = (size: number) => BUCKETS.find((b) => b >= size * 2) ?? 384;
+
+function useAvatarImage(look: AvatarLook, size: number): string | null | "flat" {
+  const [img, setImg] = useState<string | null | "flat">(null);
+  const key = JSON.stringify(look);
+  useEffect(() => {
+    let live = true;
+    load3d()
+      .then((m) => {
+        canUse3d ??= m.webglAvailable();
+        if (!canUse3d) return live && setImg("flat");
+        enqueue(() => {
+          if (!live) return;
+          try {
+            setImg(m.renderAvatarImage(JSON.parse(key), pixels(size)));
+          } catch {
+            setImg("flat");
+          }
+        });
+      })
+      .catch(() => live && setImg("flat"));
+    return () => {
+      live = false;
+    };
+  }, [key, size]);
+  return img;
+}
+
+/** The learner's 3D avatar as a still image. Falls back to the flat version without WebGL. */
+export function Avatar({ look, size = 96, className = "", title }: { look: AvatarLook; size?: number; className?: string; title?: string }) {
+  const img = useAvatarImage(look, size);
+  if (img === "flat") return <AvatarFlat look={look} size={size} className={className} title={title} />;
+  if (!img) {
+    const bg = get(look.bg, defaultLook.bg)!;
+    return <span className={`inline-block rounded-full align-middle ${className}`} style={{ width: size, height: size, background: bg.color }} aria-hidden />;
+  }
+  // A generated data URL, so next/image adds nothing here.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={img} width={size} height={size} alt={title ?? "Your avatar"} className={`inline-block rounded-full align-middle ${className}`} draggable={false} />;
+}
+
+/** A live 3D avatar you can drag to spin. */
+export function AvatarViewer({ look, size = 200, className = "" }: { look: AvatarLook; size?: number; className?: string }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const back = useRef<HTMLCanvasElement>(null);
+  const [flat, setFlat] = useState(false);
+  // Set once the scene is running; swaps the model when the look changes.
+  const show = useRef<((look: AvatarLook) => void) | null>(null);
+  const latest = useRef(look);
+  latest.current = look;
+  const key = JSON.stringify(look);
+
+  useEffect(() => {
+    let stop = false;
+    let cleanup = () => {};
+    load3d()
+      .then((m) => {
+        if (stop || !canvas.current || !back.current) return;
+        if (!m.webglAvailable()) return setFlat(true);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const px = Math.round(size * dpr);
+        const bctx = back.current.getContext("2d")!;
+        back.current.width = back.current.height = px;
+
+        const renderer = m.createRenderer(canvas.current);
+        renderer.setPixelRatio(dpr);
+        renderer.setSize(size, size, false);
+        const { scene, camera } = m.createScene();
+        let avatar = m.buildAvatar(latest.current);
+        scene.add(avatar);
+        m.drawBackdrop(bctx, get(latest.current.bg, defaultLook.bg), px);
+        show.current = (next) => {
+          scene.remove(avatar);
+          m.disposeGroup(avatar);
+          avatar = m.buildAvatar(next);
+          scene.add(avatar);
+          bctx.clearRect(0, 0, px, px);
+          m.drawBackdrop(bctx, get(next.bg, defaultLook.bg), px);
+        };
+
+        // Drag to spin; when idle, it sways gently near the front.
+        let yaw = -0.18, velocity = 0, dragging = false, lastX = 0, idle = 0;
+        const el = canvas.current;
+        const down = (e: PointerEvent) => {
+          dragging = true;
+          lastX = e.clientX;
+          el.setPointerCapture(e.pointerId);
+        };
+        const move = (e: PointerEvent) => {
+          if (!dragging) return;
+          velocity = (e.clientX - lastX) * 0.012;
+          lastX = e.clientX;
+          yaw += velocity;
+          idle = 0;
+        };
+        const up = () => (dragging = false);
+        el.addEventListener("pointerdown", down);
+        el.addEventListener("pointermove", move);
+        el.addEventListener("pointerup", up);
+        el.addEventListener("pointercancel", up);
+
+        let frame = 0;
+        const t0 = performance.now();
+        const tick = () => {
+          const t = (performance.now() - t0) / 1000;
+          if (!dragging) {
+            velocity *= 0.92;
+            yaw += velocity;
+            idle += 1 / 60;
+            if (idle > 1.5) {
+              const target = -0.18 + Math.sin(t * 0.8) * 0.22;
+              const wrapped = yaw - Math.round((yaw - target) / (Math.PI * 2)) * Math.PI * 2;
+              yaw = wrapped + (target - wrapped) * 0.04;
+            }
+          }
+          avatar.rotation.y = yaw;
+          avatar.position.y = Math.sin(t * 1.6) * 0.03;
+          renderer.render(scene, camera);
+          frame = requestAnimationFrame(tick);
+        };
+        tick();
+        cleanup = () => {
+          cancelAnimationFrame(frame);
+          show.current = null;
+          el.removeEventListener("pointerdown", down);
+          el.removeEventListener("pointermove", move);
+          el.removeEventListener("pointerup", up);
+          el.removeEventListener("pointercancel", up);
+          m.disposeGroup(avatar);
+          renderer.dispose();
+          renderer.forceContextLoss();
+        };
+      })
+      .catch(() => setFlat(true));
+    return () => {
+      stop = true;
+      cleanup();
+    };
+  }, [size]);
+
+  useEffect(() => {
+    show.current?.(JSON.parse(key));
+  }, [key]);
+
+  if (flat) return <AvatarFlat look={look} size={size} className={className} />;
+  return (
+    <div className={`relative overflow-hidden rounded-full ${className}`} style={{ width: size, height: size }}>
+      <canvas ref={back} className="absolute inset-0 h-full w-full" aria-hidden />
+      <canvas
+        ref={canvas}
+        className="absolute inset-0 h-full w-full cursor-grab touch-pan-y active:cursor-grabbing"
+        role="img"
+        aria-label="Your avatar. Drag to spin it."
+      />
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@ import { sectionTitles, units } from "@/content/catalog";
 import { expressions, hairColors, itemsById, journeyThemes, skinTones, wardrobe, type Slot } from "@/content/wardrobe";
 import { journeyRewards, journeyStatus, unlockHint, type AvatarLook } from "@/lib/avatar";
 import type { Section } from "@/lib/types";
-import { Avatar, ItemPreview } from "./Avatar";
+import { Avatar, AvatarViewer, ItemPreview } from "./Avatar";
 import { Eyebrow, Icon } from "./ui";
 import { useAvatar } from "./useAvatar";
 
@@ -73,7 +73,8 @@ export function AvatarStudio() {
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-line bg-white p-6 text-center">
-            <Avatar look={look} size={176} className="mx-auto" />
+            <AvatarViewer look={look} size={200} className="mx-auto" />
+            <p className="mt-2 text-xs text-muted">Drag to spin</p>
             <div className="mt-5 text-left">
               <div className="flex items-baseline justify-between text-sm">
                 <span className="font-semibold">Collection</span>
