@@ -9,7 +9,7 @@ export const units: Unit[] = [
     title: "Information & Ideas",
     testShare: { percent: 26, questions: [12, 14] },
     skills: [
-      { slug: "central-ideas", title: "Central Ideas and Details", summary: "Find the main point of a short text.", available: false },
+      { slug: "central-ideas", title: "Central Ideas and Details", summary: "Find the main point of a short text.", available: true },
       { slug: "command-of-evidence", title: "Command of Evidence", summary: "Pick the quotation or data that supports a claim.", available: false },
       { slug: "inferences", title: "Inferences", summary: "Complete a text with the most logical conclusion.", available: false },
     ],
@@ -20,7 +20,7 @@ export const units: Unit[] = [
     title: "Craft & Structure",
     testShare: { percent: 28, questions: [13, 15] },
     skills: [
-      { slug: "words-in-context", title: "Words in Context", summary: "Choose the most precise word for the blank.", available: false },
+      { slug: "words-in-context", title: "Words in Context", summary: "Choose the most precise word for the blank.", available: true },
       { slug: "text-structure", title: "Text Structure and Purpose", summary: "Describe what a text or sentence is doing.", available: false },
       { slug: "cross-text", title: "Cross-Text Connections", summary: "Compare how two authors would respond to each other.", available: false },
     ],
@@ -32,7 +32,7 @@ export const units: Unit[] = [
     testShare: { percent: 20, questions: [8, 12] },
     skills: [
       { slug: "rhetorical-synthesis", title: "Rhetorical Synthesis", summary: "Use a student's notes to meet a stated goal.", available: false },
-      { slug: "transitions", title: "Transitions", summary: "Pick the word that shows how ideas connect.", available: false },
+      { slug: "transitions", title: "Transitions", summary: "Pick the word that shows how ideas connect.", available: true },
     ],
   },
   {
@@ -42,7 +42,7 @@ export const units: Unit[] = [
     testShare: { percent: 26, questions: [11, 15] },
     skills: [
       { slug: "boundaries", title: "Boundaries", summary: "Punctuate sentences and clauses correctly.", available: true },
-      { slug: "form-structure-sense", title: "Form, Structure, and Sense", summary: "Agreement, verb tense, pronouns, and modifiers.", available: false },
+      { slug: "form-structure-sense", title: "Form, Structure, and Sense", summary: "Agreement, verb tense, pronouns, and modifiers.", available: true },
     ],
   },
   {
@@ -51,10 +51,10 @@ export const units: Unit[] = [
     title: "Algebra",
     testShare: { percent: 35, questions: [13, 15] },
     skills: [
-      { slug: "linear-equations-one-variable", title: "Linear Equations in One Variable", summary: "Solve and interpret linear equations.", available: false },
-      { slug: "linear-functions", title: "Linear Functions", summary: "Slopes, intercepts, and linear models.", available: false },
+      { slug: "linear-equations-one-variable", title: "Linear Equations in One Variable", summary: "Solve and interpret linear equations.", available: true },
+      { slug: "linear-functions", title: "Linear Functions", summary: "Slopes, intercepts, and linear models.", available: true },
       { slug: "linear-equations-two-variables", title: "Linear Equations in Two Variables", summary: "Graphs and solutions of two-variable equations.", available: false },
-      { slug: "systems", title: "Systems of Linear Equations", summary: "Solve two equations at once.", available: false },
+      { slug: "systems", title: "Systems of Linear Equations", summary: "Solve two equations at once.", available: true },
       { slug: "linear-inequalities", title: "Linear Inequalities", summary: "Write and solve inequalities.", available: false },
     ],
   },
@@ -76,7 +76,7 @@ export const units: Unit[] = [
     testShare: { percent: 15, questions: [5, 7] },
     skills: [
       { slug: "ratios-rates", title: "Ratios, Rates, and Units", summary: "Proportions and unit conversions.", available: false },
-      { slug: "percentages", title: "Percentages", summary: "Percent change and percent of a whole.", available: false },
+      { slug: "percentages", title: "Percentages", summary: "Percent change and percent of a whole.", available: true },
       { slug: "one-variable-data", title: "One-Variable Data", summary: "Mean, median, spread, and distributions.", available: false },
       { slug: "two-variable-data", title: "Two-Variable Data", summary: "Scatterplots and lines of best fit.", available: false },
       { slug: "probability", title: "Probability", summary: "Probability and conditional probability.", available: false },

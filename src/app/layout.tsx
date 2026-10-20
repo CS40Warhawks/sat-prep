@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { CloudSync } from "@/components/CloudSync";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -12,7 +13,10 @@ export const viewport: Viewport = { themeColor: "#58cc02" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <CloudSync />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountButton } from "@/components/AccountButton";
 import { AvatarBadge } from "@/components/AvatarBadge";
 import { StatsBar } from "@/components/StatsBar";
 import { site } from "@/lib/site";
@@ -30,6 +31,7 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
           </div>
           <div className="flex items-center gap-4">
             <StatsBar />
+            <AccountButton />
             <AvatarBadge />
           </div>
         </nav>

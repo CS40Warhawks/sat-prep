@@ -3,12 +3,36 @@ import { units } from "../src/content/catalog.ts";
 import { diagnosticQuestions } from "../src/content/diagnostic.ts";
 import { boundariesLessons } from "../src/content/rw/boundaries.path.ts";
 import { boundariesQuestions } from "../src/content/rw/boundaries.questions.ts";
+import { transitionsLessons } from "../src/content/rw/transitions.path.ts";
+import { transitionsQuestions } from "../src/content/rw/transitions.questions.ts";
+import { wordsInContextLessons } from "../src/content/rw/words-in-context.path.ts";
+import { wordsInContextQuestions } from "../src/content/rw/words-in-context.questions.ts";
+import { formStructureSenseLessons } from "../src/content/rw/form-structure-sense.path.ts";
+import { formStructureSenseQuestions } from "../src/content/rw/form-structure-sense.questions.ts";
+import { centralIdeasLessons } from "../src/content/rw/central-ideas.path.ts";
+import { centralIdeasQuestions } from "../src/content/rw/central-ideas.questions.ts";
+import { linearEquationsOneVariableLessons } from "../src/content/math/linear-equations-one-variable.path.ts";
+import { linearEquationsOneVariableQuestions } from "../src/content/math/linear-equations-one-variable.questions.ts";
+import { linearFunctionsLessons } from "../src/content/math/linear-functions.path.ts";
+import { linearFunctionsQuestions } from "../src/content/math/linear-functions.questions.ts";
+import { systemsLessons } from "../src/content/math/systems.path.ts";
+import { systemsQuestions } from "../src/content/math/systems.questions.ts";
+import { percentagesLessons } from "../src/content/math/percentages.path.ts";
+import { percentagesQuestions } from "../src/content/math/percentages.questions.ts";
 import { BLANK, fillBlank } from "../src/lib/passage.ts";
 import type { Lesson, Question } from "../src/lib/types.ts";
 import { wardrobe } from "../src/content/wardrobe.ts";
 
 const banks: Record<string, Question[]> = {
   boundaries: boundariesQuestions,
+  "transitions": transitionsQuestions,
+  "words-in-context": wordsInContextQuestions,
+  "form-structure-sense": formStructureSenseQuestions,
+  "central-ideas": centralIdeasQuestions,
+  "linear-equations-one-variable": linearEquationsOneVariableQuestions,
+  "linear-functions": linearFunctionsQuestions,
+  "systems": systemsQuestions,
+  "percentages": percentagesQuestions,
 };
 // Checked with the same rules as skill banks, but it spans every skill and has no lesson path.
 const DIAGNOSTIC = "diagnostic";
@@ -16,6 +40,14 @@ banks[DIAGNOSTIC] = diagnosticQuestions;
 
 const paths: Record<string, Lesson[]> = {
   boundaries: boundariesLessons,
+  "transitions": transitionsLessons,
+  "words-in-context": wordsInContextLessons,
+  "form-structure-sense": formStructureSenseLessons,
+  "central-ideas": centralIdeasLessons,
+  "linear-equations-one-variable": linearEquationsOneVariableLessons,
+  "linear-functions": linearFunctionsLessons,
+  "systems": systemsLessons,
+  "percentages": percentagesLessons,
 };
 
 const errors: string[] = [];

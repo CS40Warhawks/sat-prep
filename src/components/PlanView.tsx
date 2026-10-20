@@ -243,7 +243,7 @@ export function PlanView({ lessonSkills }: { lessonSkills: string[] }) {
               const ans = q.choices.find((c) => c.letter === q.answer)!;
               return (
                 <li key={q.id} className="border-t border-line pt-4">
-                  {q.passage && <p className="text-muted">{q.passage}</p>}
+                  {q.passage && <p className="whitespace-pre-line text-muted">{q.passage}</p>}
                   <p className="mt-1 font-medium">{q.prompt}</p>
                   <p className="mt-2 text-brand-dark">
                     <span className="font-semibold">Answer: </span>

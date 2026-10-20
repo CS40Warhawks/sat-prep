@@ -3,9 +3,10 @@ import { journeyLessons } from "@/content/journeys";
 import { itemsById, rarities, wardrobe, type Expression, type Item, type Rarity, type Slot } from "@/content/wardrobe";
 import { loadDiagnostic } from "./diagnostic";
 import { lessonKey, type Progress } from "./progress";
+import { STORE_KEYS, markSaved } from "./store";
 
-// The learner's avatar, stored in the browser until accounts exist.
-const KEY = "peakprep:avatar:v1";
+// The learner's avatar, stored in the browser and synced to their account when signed in.
+const KEY = STORE_KEYS.avatar;
 /** Fired after a save so every avatar on the page (like the header badge) updates. */
 export const AVATAR_EVENT = "peakprep:avatar";
 
@@ -68,6 +69,7 @@ export function saveAvatar(patch: Partial<AvatarSave>) {
     // Storage unavailable; the avatar only lasts for this visit.
   }
   window.dispatchEvent(new Event(AVATAR_EVENT));
+  markSaved();
 }
 
 export interface JourneyStatus {
