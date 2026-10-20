@@ -92,6 +92,9 @@ for (const skill of skillSlugs) {
     if (n !== 1) errors.push(`wardrobe: ${skill} has ${n} "${stage}" rewards, expected 1`);
   }
 }
+for (const rarity of ["common", "rare", "legendary"]) {
+  if (!wardrobe.some((i) => i.unlock.kind === "box" && i.unlock.rarity === rarity)) errors.push(`wardrobe: no ${rarity} mystery box items`);
+}
 for (const it of wardrobe) {
   if (it.unlock.kind === "journey" && !skillSlugs.has(it.unlock.skill)) errors.push(`wardrobe/${it.id}: unknown skill ${it.unlock.skill}`);
 }

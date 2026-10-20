@@ -102,3 +102,24 @@ body {
     animation: none;
   }
 }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0) scale(1); }
+  15% { transform: rotate(-9deg) scale(1.04); }
+  30% { transform: rotate(8deg) scale(1.06); }
+  45% { transform: rotate(-7deg) scale(1.08); }
+  60% { transform: rotate(6deg) scale(1.1); }
+  75% { transform: rotate(-4deg) scale(1.12); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@utility animate-wiggle {
+  animation: wiggle 0.9s ease-in-out infinite;
+}
+@utility animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-wiggle, .animate-spin-slow { animation: none; }
+}

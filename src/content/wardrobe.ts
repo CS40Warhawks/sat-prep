@@ -4,10 +4,13 @@ export type Slot = "hair" | "hat" | "face" | "top" | "bg";
 
 export type HairShape = "short" | "long" | "curly" | "bun" | "buzz" | "spiky" | "shaved";
 export type HatShape =
-  | "beanie" | "cap" | "beret" | "gradcap" | "explorer" | "hardhat" | "fedora" | "crown" | "headphones" | "helmet" | "cone";
+  | "beanie" | "cap" | "beret" | "gradcap" | "explorer" | "hardhat" | "fedora" | "crown" | "headphones" | "helmet" | "cone" | "halo" | "wizard";
 export type FaceShape = "round" | "square" | "shades" | "goggles";
 export type TopShape = "tee" | "hoodie" | "stripes" | "vest" | "jacket" | "turtleneck" | "spacesuit" | "varsity";
-export type BgShape = "solid" | "dots" | "stripes" | "grid" | "stars" | "rays" | "rings";
+export type BgShape = "solid" | "dots" | "stripes" | "grid" | "stars" | "rays" | "rings" | "rainbow";
+
+export type Rarity = "common" | "rare" | "legendary";
+export const rarities: Rarity[] = ["common", "rare", "legendary"];
 
 export type Unlock =
   | { kind: "starter" }
@@ -15,7 +18,9 @@ export type Unlock =
   | { kind: "journey"; skill: string; stage: "half" | "end" }
   | { kind: "xp"; amount: number }
   | { kind: "streak"; days: number }
-  | { kind: "diagnostic" };
+  | { kind: "diagnostic" }
+  /** Only from mystery boxes, bought with XP. */
+  | { kind: "box"; rarity: Rarity };
 
 export interface Item {
   id: string;
@@ -24,6 +29,8 @@ export interface Item {
   shape: string;
   color: string;
   accent?: string;
+  /** "metal" items shine; used for some legendary pieces. */
+  finish?: "metal";
   unlock: Unlock;
 }
 
@@ -38,12 +45,19 @@ function item([slot, name, shape, color, accent]: Spec, unlock: Unlock): Item {
 
 const starter = (spec: Spec) => item(spec, { kind: "starter" });
 
+function box(rarity: Rarity, spec: Spec, finish?: "metal"): Item {
+  return { ...item(spec, { kind: "box", rarity }), ...(finish ? { finish } : {}) };
+}
+
 /** Each skill is a journey with two rewards: one halfway, one at the end. */
 function journey(skill: string, half: Spec, end: Spec): Item[] {
   return [item(half, { kind: "journey", skill, stage: "half" }), item(end, { kind: "journey", skill, stage: "end" })];
 }
 
-export const skinTones = ["#f9d9c3", "#f1c09b", "#dca47a", "#b47c52", "#8a5a3b", "#5e3b26"];
+export const skinTones = [
+  "#fbe3d3", "#f9d9c3", "#f3cfb0", "#f1c09b", "#e8b48a", "#dca47a",
+  "#c98e62", "#b47c52", "#9c6a45", "#8a5a3b", "#704830", "#5e3b26", "#4a2e1e", "#3a2318",
+];
 export const hairColors = ["#1f1a17", "#4a2f22", "#8b5a2b", "#d4a35a", "#ecdcb0", "#b91c1c", "#7c3aed", "#2563eb"];
 export const expressions = ["smile", "grin", "calm"] as const;
 export type Expression = (typeof expressions)[number];
@@ -133,9 +147,38 @@ export const wardrobe: Item[] = [
   ...journey("lines-angles-triangles", ["bg", "Prism", "rays", "#cffafe", "#06b6d4"], ["hat", "Triangle Hat", "cone", "#06b6d4", "#fde047"]),
   ...journey("right-triangles-trig", ["face", "Drafting Glasses", "square", "#0f172a"], ["top", "Compass Sweater", "stripes", "#0f766e", "#ccfbf1"]),
   ...journey("circles", ["hat", "Ring Cap", "cap", "#7c3aed", "#5b21b6"], ["bg", "Target Rings", "rings", "#fee2e2", "#f87171"]),
+
+  // Mystery box pool. Each box gives one item you don't own yet.
+  box("common", ["hat", "Lemon Beanie", "beanie", "#fde047", "#ca8a04"]),
+  box("common", ["hat", "Mint Cap", "cap", "#6ee7b7", "#059669"]),
+  box("common", ["hat", "Sky Beret", "beret", "#7dd3fc"]),
+  box("common", ["face", "Teal Frames", "round", "#0d9488"]),
+  box("common", ["face", "Tortoise Frames", "square", "#92400e"]),
+  box("common", ["top", "Navy Tee", "tee", "#1e3a8a"]),
+  box("common", ["top", "Lavender Tee", "tee", "#c4b5fd"]),
+  box("common", ["top", "Red Hoodie", "hoodie", "#dc2626", "#991b1b"]),
+  box("common", ["top", "Sage Turtleneck", "turtleneck", "#84a98c"]),
+  box("common", ["bg", "Polka Pop", "dots", "#fce7f3", "#ec4899"]),
+  box("common", ["bg", "Mint Stripes", "stripes", "#d1fae5", "#34d399"]),
+  box("common", ["bg", "Lemon Grid", "grid", "#fef9c3", "#facc15"]),
+  box("rare", ["hat", "Sun Hat", "explorer", "#f9a8d4", "#be185d"]),
+  box("rare", ["hat", "Purple Headphones", "headphones", "#7c3aed", "#f0abfc"]),
+  box("rare", ["face", "Neon Shades", "shades", "#65a30d"]),
+  box("rare", ["face", "Rose Gold Frames", "round", "#e8a598"], "metal"),
+  box("rare", ["top", "Denim Jacket", "jacket", "#3b82f6", "#e0f2fe"]),
+  box("rare", ["top", "Teal Varsity", "varsity", "#0f766e", "#fde047"]),
+  box("rare", ["bg", "Sunset Rings", "rings", "#ffedd5", "#f97316"]),
+  box("rare", ["bg", "Aurora", "rays", "#cffafe", "#a78bfa"]),
+  box("legendary", ["hat", "Halo", "halo", "#fde68a"]),
+  box("legendary", ["hat", "Wizard Hat", "wizard", "#4c1d95", "#fde047"]),
+  box("legendary", ["face", "Golden Shades", "shades", "#f59e0b"], "metal"),
+  box("legendary", ["top", "Golden Jacket", "jacket", "#f59e0b", "#1c1917"], "metal"),
+  box("legendary", ["bg", "Rainbow", "rainbow", "#e0f2fe"]),
 ];
 
 export const itemsById: Record<string, Item> = Object.fromEntries(wardrobe.map((i) => [i.id, i]));
 
 /** Slots that can be left empty. */
 export const optionalSlots: Slot[] = ["hat", "face"];
+
+export const rarityOf = (item: Item): Rarity | null => (item.unlock.kind === "box" ? item.unlock.rarity : null);
