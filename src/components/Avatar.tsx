@@ -55,6 +55,11 @@ function Background({ item }: { item: Item }) {
       );
     }
   }
+  if (shape === "rainbow") {
+    ["#ef4444", "#f97316", "#facc15", "#22c55e", "#3b82f6", "#8b5cf6"].forEach((c, i) =>
+      marks.push(<path key={c} d={`M${-38 + i * 7} 100 A${88 - i * 7} ${88 - i * 7} 0 0 1 ${138 - i * 7} 100`} fill="none" stroke={c} strokeWidth={7} opacity={0.6} />),
+    );
+  }
   if (shape === "rings") {
     for (const r of [14, 26, 38, 50]) marks.push(<circle key={r} cx={50} cy={50} r={r} fill="none" stroke={accent} strokeWidth={5} opacity={0.5} />);
   }
@@ -308,6 +313,23 @@ function Hat({ item }: { item: Item }) {
         <g>
           <circle cx={50} cy={44} r={31} fill="rgba(186,230,253,0.25)" stroke={color} strokeWidth={4.5} />
           <path d="M29 38 Q32 24 46 18" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={3} strokeLinecap="round" />
+        </g>
+      );
+    case "halo":
+      return (
+        <g>
+          <ellipse cx={50} cy={11} rx={17} ry={4.5} fill="none" stroke={color} strokeWidth={6} opacity={0.3} />
+          <ellipse cx={50} cy={11} rx={17} ry={4.5} fill="none" stroke={color} strokeWidth={2.5} />
+        </g>
+      );
+    case "wizard":
+      return (
+        <g>
+          <ellipse cx={50} cy={29} rx={30} ry={5} fill={color} />
+          <path d="M31 29 L55 1 L69 29 Z" fill={color} />
+          <path d="M33 25 H67" stroke={accent} strokeWidth={3} />
+          <circle cx={52} cy={14} r={1.8} fill={accent} />
+          <circle cx={58} cy={21} r={1.3} fill={accent} />
         </g>
       );
     case "cone":

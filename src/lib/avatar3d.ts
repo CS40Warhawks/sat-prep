@@ -304,6 +304,24 @@ function buildHat(item: Item, g: THREE.Group) {
       g.add(mesh(new THREE.SphereGeometry(1.5, SEG, 32), new THREE.MeshStandardMaterial({ color: "#e0f2fe", transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false }), [0, HEAD_Y - 0.05, 0]));
       g.add(mesh(new THREE.TorusGeometry(0.85, 0.16, 16, 48), mat(color, { metalness: 0.3, roughness: 0.35 }), [0, HEAD_Y - 1.35, 0], [Math.PI / 2, 0, 0]));
       break;
+    case "halo": {
+      const glow = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9, roughness: 0.3 });
+      g.add(mesh(new THREE.TorusGeometry(0.62, 0.07, 16, 64), glow, [0, top + 0.45, -0.05], [Math.PI / 2 - 0.15, 0, 0]));
+      g.add(mesh(new THREE.TorusGeometry(0.62, 0.16, 16, 64), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false }), [0, top + 0.45, -0.05], [Math.PI / 2 - 0.15, 0, 0]));
+      break;
+    }
+    case "wizard": {
+      g.add(disc(1.35, 0.06, HEAD_Y + 0.6, m));
+      const hat = new THREE.Group();
+      hat.position.set(0.05, HEAD_Y + 0.6, -0.05);
+      hat.rotation.z = -0.16;
+      hat.add(mesh(new THREE.ConeGeometry(0.85, 1.55, 40), m, [0, 0.77, 0]));
+      hat.add(mesh(new THREE.CylinderGeometry(0.78, 0.84, 0.16, 40), a, [0, 0.12, 0]));
+      const star = new THREE.OctahedronGeometry(0.1);
+      for (const [x, y, z] of [[0.25, 0.55, 0.62], [-0.3, 0.8, 0.45], [0.12, 1.1, 0.32], [-0.1, 0.4, 0.75]]) hat.add(mesh(star, a, [x, y, z], [0, 0.6, 0.3]));
+      g.add(hat);
+      break;
+    }
     case "cone":
       g.add(mesh(new THREE.ConeGeometry(0.55, 1.0, 32), m, [0.1, top + 0.38, -0.05], [0, 0, -0.12]));
       for (const y of [0.2, 0.55]) g.add(mesh(new THREE.TorusGeometry(0.47 - y * 0.55, 0.05, 8, 32), a, [0.1 + y * 0.12, top + y, -0.05], [Math.PI / 2, 0.12, 0]));
@@ -322,6 +340,25 @@ function buildMouth(expression: string, g: THREE.Group) {
   } else {
     g.add(mesh(new THREE.TorusGeometry(0.17, 0.04, 8, 24, Math.PI), ink, [0, y + 0.1, 0.87], [0.15, 0, Math.PI]));
   }
+}
+
+/** Gives "metal" items a polished look: shinier, with a little glow so they read without reflections. */
+function shine(group: THREE.Group, item: Item) {
+  const base = new THREE.Color(item.color);
+  group.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !(o.material instanceof THREE.MeshStandardMaterial)) return;
+    if (!o.material.color.equals(base)) return;
+    o.material.metalness = 0.55;
+    o.material.roughness = 0.2;
+    o.material.emissive = base.clone().multiplyScalar(0.35);
+  });
+}
+
+function piece(item: Item, build: (g: THREE.Group) => void, into: THREE.Group) {
+  const sub = new THREE.Group();
+  build(sub);
+  if (item.finish === "metal") shine(sub, item);
+  into.add(sub);
 }
 
 /** The whole avatar as a three.js group, centered for the default camera. */
@@ -350,14 +387,14 @@ export function buildAvatar(look: AvatarLook): THREE.Group {
   buildMouth(look.expression, g);
 
   // Small hats (crown, party cone) and over-ear gear leave the hair as it is.
-  const brimmed = hat && !["headphones", "helmet", "crown", "cone"].includes(hat.shape);
+  const brimmed = hat && !["headphones", "helmet", "crown", "cone", "halo"].includes(hat.shape);
   // Under a hat, short styles tuck in; long hair and curls still show below the brim.
   const tuck = brimmed && !["long", "shaved", "curly"].includes(hair.shape);
   buildHair(tuck ? "tucked" : hair.shape, look.hairColor, g, !!brimmed);
   buildLegs(g);
-  buildTop(top, skin, g);
-  if (face) buildFace(face, g);
-  if (hat) buildHat(hat, g);
+  piece(top, (sub) => buildTop(top, skin, sub), g);
+  if (face) piece(face, (sub) => buildFace(face, sub), g);
+  if (hat) piece(hat, (sub) => buildHat(hat, sub), g);
   return g;
 }
 
@@ -473,6 +510,18 @@ export function drawBackdrop(ctx: CanvasRenderingContext2D, item: Item | null, s
         ctx.fill();
       }
       break;
+    case "rainbow": {
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 7 * s;
+      const bands = ["#ef4444", "#f97316", "#facc15", "#22c55e", "#3b82f6", "#8b5cf6"];
+      bands.forEach((c, i) => {
+        ctx.strokeStyle = c;
+        ctx.beginPath();
+        ctx.arc(50 * s, 100 * s, (88 - i * 7) * s, Math.PI, Math.PI * 2);
+        ctx.stroke();
+      });
+      break;
+    }
     case "rings":
       ctx.globalAlpha = 0.5;
       ctx.lineWidth = 5 * s;
