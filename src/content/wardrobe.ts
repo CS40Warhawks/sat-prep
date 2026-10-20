@@ -54,7 +54,10 @@ function journey(skill: string, half: Spec, end: Spec): Item[] {
   return [item(half, { kind: "journey", skill, stage: "half" }), item(end, { kind: "journey", skill, stage: "end" })];
 }
 
-export const skinTones = ["#f9d9c3", "#f1c09b", "#dca47a", "#b47c52", "#8a5a3b", "#5e3b26"];
+export const skinTones = [
+  "#fbe3d3", "#f9d9c3", "#f3cfb0", "#f1c09b", "#e8b48a", "#dca47a",
+  "#c98e62", "#b47c52", "#9c6a45", "#8a5a3b", "#704830", "#5e3b26", "#4a2e1e", "#3a2318",
+];
 export const hairColors = ["#1f1a17", "#4a2f22", "#8b5a2b", "#d4a35a", "#ecdcb0", "#b91c1c", "#7c3aed", "#2563eb"];
 export const expressions = ["smile", "grin", "calm"] as const;
 export type Expression = (typeof expressions)[number];

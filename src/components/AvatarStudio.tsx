@@ -21,7 +21,8 @@ const TABS: { slot: Slot; label: string }[] = [
 
 const EXPRESSION_LABEL: Record<string, string> = { smile: "Smile", grin: "Grin", calm: "Calm" };
 
-function Swatches({ label, values, value, onPick }: { label: string; values: string[]; value: string; onPick: (v: string) => void }) {
+function Swatches({ label, values, value, onPick, custom }: { label: string; values: string[]; value: string; onPick: (v: string) => void; custom?: boolean }) {
+  const isCustom = custom && !values.includes(value);
   return (
     <div>
       <p className="text-xs font-medium text-muted">{label}</p>
@@ -36,6 +37,16 @@ function Swatches({ label, values, value, onPick }: { label: string; values: str
             style={{ background: v }}
           />
         ))}
+        {custom && (
+          <label
+            title={`Pick any ${label.toLowerCase()}`}
+            className={`relative h-7 w-7 cursor-pointer overflow-hidden rounded-full ring-offset-2 ${isCustom ? "ring-2 ring-ink" : "ring-1 ring-line hover:ring-ink/30"}`}
+            style={{ background: isCustom ? value : "conic-gradient(#fbe3d3, #dca47a, #8a5a3b, #3a2318, #fbe3d3)" }}
+          >
+            <span className="sr-only">Custom {label.toLowerCase()}</span>
+            <input type="color" value={value} onChange={(e) => onPick(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+          </label>
+        )}
       </div>
     </div>
   );
@@ -91,7 +102,7 @@ export function AvatarStudio() {
             </div>
           </div>
           <div className="space-y-4 rounded-2xl border border-line bg-white p-5">
-            <Swatches label="Skin" values={skinTones} value={look.skin} onPick={(skin) => set({ skin })} />
+            <Swatches label="Skin tone" custom values={skinTones} value={look.skin} onPick={(skin) => set({ skin })} />
             <Swatches label="Hair color" values={hairColors} value={look.hairColor} onPick={(hairColor) => set({ hairColor })} />
             <div>
               <p className="text-xs font-medium text-muted">Expression</p>

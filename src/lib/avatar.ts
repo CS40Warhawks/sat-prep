@@ -46,8 +46,11 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x) => typeo
 export function loadAvatar(): AvatarSave {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    const look = { ...defaultLook, ...raw.look };
+    // Skin and hair accept any color from the picker, but only as a plain hex value.
+    for (const k of ["skin", "hairColor"] as const) if (!/^#[0-9a-f]{6}$/i.test(look[k])) look[k] = defaultLook[k];
     return {
-      look: { ...defaultLook, ...raw.look },
+      look,
       seen: list(raw.seen),
       boxItems: list(raw.boxItems).filter((id) => itemsById[id]?.unlock.kind === "box"),
       spentXp: Number.isFinite(raw.spentXp) && raw.spentXp > 0 ? raw.spentXp : 0,
