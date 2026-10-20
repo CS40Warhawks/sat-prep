@@ -1,5 +1,7 @@
-// Learner progress, stored in the browser until accounts exist.
-const KEY = "peakprep:progress:v2";
+import { STORE_KEYS, markSaved } from "./store";
+
+// Learner progress, stored in the browser and synced to the learner's account when signed in.
+const KEY = STORE_KEYS.progress;
 export const DAILY_GOAL = 30;
 
 export interface LessonRecord {
@@ -81,5 +83,6 @@ export function finishLesson(skill: string, lesson: string, correctFirstTry: num
   } catch {
     // Storage unavailable (private mode); progress just isn't saved.
   }
+  markSaved();
   return { before: p, progress: next, xp, extendedStreak };
 }

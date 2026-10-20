@@ -1,8 +1,9 @@
 import { questionsPerTest, units } from "@/content/catalog";
+import { STORE_KEYS, markSaved } from "./store";
 import type { Section, Skill, Unit } from "./types";
 
-// Diagnostic results, stored in the browser until accounts exist.
-const KEY = "peakprep:diagnostic:v1";
+// Diagnostic results, stored in the browser and synced to the learner's account when signed in.
+const KEY = STORE_KEYS.diagnostic;
 
 /** strong: first question right. review: first wrong, follow-up right. focus: both wrong. */
 export type SkillStatus = "strong" | "review" | "focus";
@@ -31,6 +32,7 @@ export function saveSection(section: Section, result: SectionResult) {
   } catch {
     // Storage unavailable; results only last for this visit.
   }
+  markSaved();
   return all;
 }
 
